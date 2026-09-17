@@ -91,6 +91,28 @@ function App() {
     [doctors.length, patients.length, appointments]
   );
 
+  const nextAppointment = useMemo(() => {
+    const upcoming = [...appointments]
+      .filter((appointment) => appointment.startTime && appointment.status !== "Cancelled")
+      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+    return upcoming[0] || null;
+  }, [appointments]);
+
+  const todayAppointments = useMemo(() => {
+    const today = new Date();
+
+    return appointments.filter((appointment) => {
+      if (!appointment.startTime) return false;
+      const current = new Date(appointment.startTime);
+      return (
+        current.getFullYear() === today.getFullYear() &&
+        current.getMonth() === today.getMonth() &&
+        current.getDate() === today.getDate()
+      );
+    }).length;
+  }, [appointments]);
+
   const handleDoctorSubmit = async (event) => {
     event.preventDefault();
 
@@ -200,20 +222,37 @@ function App() {
         <div className="status-pill">{loading ? "Refreshing data..." : "System online"}</div>
       </header>
 
+      <section className="overview-panel">
+        <div>
+          <span className="eyebrow">Today’s overview</span>
+          <h2>Care operations are running smoothly</h2>
+        </div>
+        <div className="overview-actions">
+          <div className="mini-metric">
+            <span>Next visit</span>
+            <strong>{nextAppointment ? formatDate(nextAppointment.startTime) : "No upcoming slots"}</strong>
+          </div>
+          <div className="mini-metric">
+            <span>Today</span>
+            <strong>{todayAppointments} visits</strong>
+          </div>
+        </div>
+      </section>
+
       <section className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card stat-card--blue">
           <span>Doctors</span>
           <strong>{stats.doctors}</strong>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card--mint">
           <span>Patients</span>
           <strong>{stats.patients}</strong>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card--purple">
           <span>Booked</span>
           <strong>{stats.booked}</strong>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card--red">
           <span>Cancelled</span>
           <strong>{stats.cancelled}</strong>
         </div>
