@@ -47,15 +47,22 @@ function App() {
   const [appointmentForm, setAppointmentForm] = useState(emptyAppointment);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
+  const [appointmentSearch, setAppointmentSearch] = useState("");
+  const [sortBy, setSortBy] = useState("startTime");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   const fetchData = async () => {
     setLoading(true);
 
     try {
       const [doctorResponse, patientResponse, appointmentResponse] = await Promise.all([
-        fetch(`${API_URL}/api/doctors`),
-        fetch(`${API_URL}/api/patients`),
-        fetch(`${API_URL}/api/appointments`),
+        fetch(`${API_URL}/api/doctors?search=${encodeURIComponent(doctorSearch)}&sortBy=name&order=asc`),
+        fetch(`${API_URL}/api/patients?search=${encodeURIComponent(patientSearch)}&sortBy=name&order=asc`),
+        fetch(
+          `${API_URL}/api/appointments?patient=${encodeURIComponent(appointmentSearch)}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(sortOrder)}`
+        ),
       ]);
 
       const [doctorData, patientData, appointmentData] = await Promise.all([
@@ -64,9 +71,9 @@ function App() {
         appointmentResponse.json(),
       ]);
 
-      setDoctors(Array.isArray(doctorData) ? doctorData : []);
-      setPatients(Array.isArray(patientData) ? patientData : []);
-      setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
+      setDoctors(Array.isArray(doctorData.doctors) ? doctorData.doctors : Array.isArray(doctorData) ? doctorData : []);
+      setPatients(Array.isArray(patientData.patients) ? patientData.patients : Array.isArray(patientData) ? patientData : []);
+      setAppointments(Array.isArray(appointmentData.appointments) ? appointmentData.appointments : Array.isArray(appointmentData) ? appointmentData : []);
     } catch (error) {
       setMessage({
         type: "error",
@@ -79,7 +86,7 @@ function App() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [doctorSearch, patientSearch, appointmentSearch, sortBy, sortOrder]);
 
   const stats = useMemo(
     () => ({
@@ -255,6 +262,59 @@ function App() {
         <div className="stat-card stat-card--red">
           <span>Cancelled</span>
           <strong>{stats.cancelled}</strong>
+        </div>
+      </section>
+
+      <section className="toolbar-panel">
+        <div className="toolbar-group">
+          <label>
+            Search doctors
+            <input
+              type="text"
+              placeholder="Name or specialty"
+              value={doctorSearch}
+              onChange={(event) => setDoctorSearch(event.target.value)}
+            />
+          </label>
+        </div>
+        <div className="toolbar-group">
+          <label>
+            Search patients
+            <input
+              type="text"
+              placeholder="Name, email, or phone"
+              value={patientSearch}
+              onChange={(event) => setPatientSearch(event.target.value)}
+            />
+          </label>
+        </div>
+        <div className="toolbar-group">
+          <label>
+            Search appointments
+            <input
+              type="text"
+              placeholder="Patient name"
+              value={appointmentSearch}
+              onChange={(event) => setAppointmentSearch(event.target.value)}
+            />
+          </label>
+        </div>
+        <div className="toolbar-group sort-group">
+          <label>
+            Sort by
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+              <option value="startTime">Date</option>
+              <option value="status">Status</option>
+              <option value="doctorId">Doctor</option>
+            </select>
+          </label>
+          <label>
+            Order
+            <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}>
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </label>
         </div>
       </section>
 

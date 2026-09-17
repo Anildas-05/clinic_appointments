@@ -110,7 +110,39 @@ app.get("/api/health", (req, res) => {
 });
 
 app.get("/api/doctors", (req, res) => {
-  res.json(doctors);
+  const search = (req.query.search || "").trim().toLowerCase();
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.min(Number(req.query.limit) || 10, 100);
+  const skip = (page - 1) * limit;
+  const sortBy = req.query.sortBy || "name";
+  const order = String(req.query.order || "asc").toLowerCase() === "desc" ? -1 : 1;
+
+  let result = [...doctors];
+
+  if (search) {
+    result = result.filter((doctor) =>
+      doctor.name.toLowerCase().includes(search) ||
+      doctor.specialization.toLowerCase().includes(search)
+    );
+  }
+
+  result = result.sort((a, b) => {
+    const left = a[sortBy] ?? "";
+    const right = b[sortBy] ?? "";
+    return String(left).localeCompare(String(right)) * order;
+  });
+
+  const total = result.length;
+  const paginated = result.slice(skip, skip + limit);
+
+  res.json({
+    success: true,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+    doctors: paginated,
+  });
 });
 
 app.post("/api/doctors", (req, res) => {
@@ -138,14 +170,40 @@ app.post("/api/doctors", (req, res) => {
 });
 
 app.get("/api/patients", (req, res) => {
-  const search = (req.query.search || "").toLowerCase();
+  const search = (req.query.search || "").trim().toLowerCase();
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.min(Number(req.query.limit) || 10, 100);
+  const skip = (page - 1) * limit;
+  const sortBy = req.query.sortBy || "name";
+  const order = String(req.query.order || "asc").toLowerCase() === "desc" ? -1 : 1;
 
-  const result = patients.filter((patient) => {
-    const matches = !search || patient.name.toLowerCase().includes(search) || patient.phone.includes(search);
-    return matches;
+  let result = [...patients];
+
+  if (search) {
+    result = result.filter((patient) =>
+      patient.name.toLowerCase().includes(search) ||
+      patient.phone.includes(search) ||
+      patient.email.toLowerCase().includes(search)
+    );
+  }
+
+  result = result.sort((a, b) => {
+    const left = a[sortBy] ?? "";
+    const right = b[sortBy] ?? "";
+    return String(left).localeCompare(String(right)) * order;
   });
 
-  res.json(result);
+  const total = result.length;
+  const paginated = result.slice(skip, skip + limit);
+
+  res.json({
+    success: true,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+    patients: paginated,
+  });
 });
 
 app.post("/api/patients", (req, res) => {
@@ -253,6 +311,12 @@ const getOutboxData = (req, res) => {
 app.get("/api/appointments", (req, res) => {
   const patientName = (req.query.patient || req.query.patientName || "").trim().toLowerCase();
   const doctorId = req.query.doctorId ? Number(req.query.doctorId) : null;
+  const status = (req.query.status || "").trim().toLowerCase();
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.min(Number(req.query.limit) || 10, 100);
+  const skip = (page - 1) * limit;
+  const sortBy = req.query.sortBy || "startTime";
+  const order = String(req.query.order || "asc").toLowerCase() === "desc" ? -1 : 1;
 
   let results = appointments.map(formatAppointmentResponse);
 
@@ -266,7 +330,27 @@ app.get("/api/appointments", (req, res) => {
     results = results.filter((appointment) => appointment.doctorId === doctorId);
   }
 
-  res.json(results);
+  if (status) {
+    results = results.filter((appointment) => appointment.status.toLowerCase() === status);
+  }
+
+  results = results.sort((a, b) => {
+    const left = new Date(a[sortBy] || 0).getTime();
+    const right = new Date(b[sortBy] || 0).getTime();
+    return (left - right) * order;
+  });
+
+  const total = results.length;
+  const paginated = results.slice(skip, skip + limit);
+
+  res.json({
+    success: true,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+    appointments: paginated,
+  });
 });
 
 app.get("/api/doctors/:id/appointments", (req, res) => {

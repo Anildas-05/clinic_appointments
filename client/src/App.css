@@ -147,6 +147,39 @@
   color: #111827;
 }
 
+.toolbar-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.04);
+}
+
+.toolbar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toolbar-group label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.sort-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .notice {
   border-radius: 12px;
   padding: 14px 16px;
@@ -333,7 +366,8 @@ button[type="submit"] {
 
 @media (max-width: 860px) {
   .stats-grid,
-  .content-grid {
+  .content-grid,
+  .toolbar-panel {
     grid-template-columns: 1fr;
   }
 
